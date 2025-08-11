@@ -21,9 +21,30 @@ struct Args {
 }
 fn run(args: Args) -> Result<()> {
     for filename in args.files {
-        match open(&filename) {
-            Err(err) => eprintln!("Failed to open {filename}: {err}"),
-            Ok(_) => println!("Opened {filename}"),
+        let file = match open(&filename) {
+            Ok(file) => file,
+            Err(e) => {
+                eprintln!("{e}");
+                continue;
+            }
+        };
+        let mut line_number = 1;
+
+        for line in file.lines() {
+            let line = line?;
+            if args.line_numbers {
+                println!("     {line_number} {line}");
+                line_number += 1;
+            } else if args.non_blank_lines {
+                if line.trim().is_empty() {
+                    println!();
+                } else {
+                    println!("     {line_number} {line}");
+                    line_number += 1;
+                }
+            } else {
+                println!("{line}");
+            }
         }
     }
     Ok(())
